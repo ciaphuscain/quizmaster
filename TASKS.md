@@ -73,7 +73,7 @@ States: **Tested** (implemented and covered by automated tests) · **Implemented
 | Non-destructive op list (reorder/disable/remove) | Tested | `audio.test.ts` |
 | WAV encoding/export (sample rate & channels preserved) | Tested | `audio.test.ts`, flow 10 |
 | MP3 export | Blocked — no MP3 encoder bundled by design; WAV only (documented) | |
-| Audio processing off the main thread | Partially — processing is memoised and yields once, but runs on the main thread. Long files (> several minutes) can briefly stall the UI. | |
+| Audio processing off the main thread | Implemented | `src/workers/audioWorker.ts` (main-thread fallback) |
 
 ## Organisation & presentation
 | Feature | State | Evidence |
@@ -102,12 +102,12 @@ States: **Tested** (implemented and covered by automated tests) · **Implemented
 | Feature | State | Evidence |
 |---|---|---|
 | Offline after install (service worker) | Tested | `canvas-offline.spec.ts` |
-| Accessibility (labels, focus rings, keyboard flows, contrast) | Implemented — manual review only; no automated axe audit yet | |
+| Accessibility (labels, focus rings, keyboard flows, contrast) | Tested | `a11y.spec.ts` — axe: no serious/critical violations (incl. colour contrast) on 8 pages + editor |
 
 ## Known limitations / next steps
 1. Automatic cutout is colour/flood-fill based, not ML segmentation (see DECISIONS D3).
-2. Audio processing runs on the main thread (see above).
+2. Waveform peak computation for very long files still runs on the main thread.
 3. Emoji appearance depends on the operating system's emoji font.
 4. PPTX slides are rendered images (layout-faithful, not individually editable shapes); reveal steps are flattened.
 5. Undo history is per editing session (persistent revisions cover longer-term recovery).
-6. No automated accessibility audit; consider adding `@axe-core/playwright`.
+6. Accessibility audit is automated for main screens only (not every dialog state).

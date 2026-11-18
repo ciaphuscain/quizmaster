@@ -19,7 +19,7 @@ Fixtures for E2E are generated deterministically by `node e2e/fixtures/make-fixt
 - `db/__tests__/performance.test.ts` — 10,000 questions: load summaries ≈ 50 ms, search+filter+sort ≈ 8 ms.
 - `features/presentation/model.test.ts` — slide building, answer/aliases/notes/unrevealed hints absent from public state before reveal, present after, Space action sequence.
 
-### End-to-end (Playwright, Chromium) — 15 passed, 1 skipped (manual screenshot helper)
+### End-to-end (Playwright, Chromium) — 16 passed, 1 skipped (manual screenshot helper)
 | Spec | Covers |
 |---|---|
 | smoke | every page loads; all 13 game editors open and save; no page errors |
@@ -36,10 +36,11 @@ Fixtures for E2E are generated deterministically by `node e2e/fixtures/make-fixt
 | exports | PNG (1920 wide), PDF question sheet, PDF answer key, PPTX (3 slides, media, answer in notes) |
 | templates | save question as template, create from it, appears in "recently used" |
 | canvas | mouse drag moves element, corner handle resizes, autosave persists across reload |
+| a11y | axe-core audit (incl. colour contrast): no serious/critical violations on dashboard, bank, create, media, round builder, templates, import/export, settings, editor |
 | offline | after first load, with network disabled: navigate, create question, load geometry, autosave |
 
 ### Manual checks performed
 - Visual review of dashboard, altered-logo editor (mirror + rotate output), neighbours map (Germany: 9 real neighbours, labelled, hidden target), silhouette (auto cutout), search history card.
 
 ### Not covered by automation
-- Live AI providers (no credentials in CI); accessibility audit tooling; long (multi-minute) audio performance; Firefox/Safari runs.
+- Live AI providers (no credentials in CI); long (multi-minute) audio performance; Firefox/Safari runs.
