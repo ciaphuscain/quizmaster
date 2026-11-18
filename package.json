@@ -46,6 +46,7 @@
     "zustand": "5.1.0"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "1.6.0",
     "@playwright/test": "1.63.0",
     "@tailwindcss/vite": "4.3.5",
     "@testing-library/jest-dom": "7.0.1",
