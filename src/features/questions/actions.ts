@@ -38,6 +38,7 @@ export async function importFiles(files: FileList | File[], kind?: Asset['type']
       const { asset, deduplicated } = await assetsRepo.importBlob(f, f.name);
       if (kind && asset.type !== kind) { toast.error(`${f.name} is not ${kind === 'image' ? 'an image' : 'an audio file'}`); continue; }
       out.push(asset);
+      if (asset.type === 'image') void import('@/hooks/useAssetUrl').then((m) => m.ensureAssetThumb(asset.id));
       if (deduplicated) toast.info(`${f.name} already in library — reused existing asset`);
     } catch (e) {
       toast.error(`Could not import ${f.name}`, errorMessage(e));

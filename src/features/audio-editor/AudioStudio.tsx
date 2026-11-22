@@ -128,8 +128,8 @@ export function AudioStudio({ clip, onChange, title = 'audio' }: { clip: AudioCl
         <Button size="sm" variant="outline" onClick={() => addOp('delete')} disabled={!sel}><Scissors size={12} />Delete selection</Button>
         <Button size="sm" variant="outline" onClick={split} tooltip="Split at playhead: click between markers to select a region"><SplitSquareHorizontal size={12} />Split</Button>
         <Button size="sm" variant="primary" onClick={() => addOp('reverse')} data-testid="op-reverse"><Rewind size={12} />Reverse {sel ? 'selection' : 'all'}</Button>
-        <Button size="sm" variant="outline" onClick={() => addOp('fadeIn', { duration: fadeSec })}>Fade in</Button>
-        <Button size="sm" variant="outline" onClick={() => addOp('fadeOut', { duration: fadeSec })}>Fade out</Button>
+        <Button size="sm" variant="outline" onClick={() => addOp('fadeIn', { duration: sel ? +(sel.end - sel.start).toFixed(3) : fadeSec })} tooltip="Fades across the selection, or the start of the clip">Fade in{sel ? ' (selection)' : ''}</Button>
+        <Button size="sm" variant="outline" onClick={() => addOp('fadeOut', { duration: sel ? +(sel.end - sel.start).toFixed(3) : fadeSec })} tooltip="Fades across the selection, or the end of the clip">Fade out{sel ? ' (selection)' : ''}</Button>
         <Button size="sm" variant="outline" onClick={() => addOp('gain', { db: gainDb })}>Gain {gainDb > 0 ? '+' : ''}{gainDb} dB</Button>
         <Button size="sm" variant="outline" onClick={() => addOp('speed', { rate: speedRate }, false)}>Speed ×{speedRate}</Button>
         <Button size="sm" variant="outline" onClick={() => addOp('loop', { count: 2 })}>Loop ×2</Button>
@@ -174,6 +174,7 @@ function Waveform({ pcm, pos, sel, markers, pxPerSec, onSeek, onSelect }: { pcm:
   const [w, setW] = useState(600);
   const H = 140;
   const drag = useRef<number | null>(null);
+  const scrub = useRef(false);
   const dur = pcm ? pcmDuration(pcm) : 0;
   const width = pxPerSec && dur ? Math.max(w, Math.round(dur * pxPerSec)) : w;
   useEffect(() => {
@@ -189,6 +190,7 @@ function Waveform({ pcm, pos, sel, markers, pxPerSec, onSeek, onSelect }: { pcm:
     if (!peaks || !dur) return;
     const tx = (t: number) => (t / dur) * width;
     // ruler
+    ctx.fillStyle = '#18181b'; ctx.fillRect(0, 0, width, 18);
     ctx.fillStyle = '#71717a'; ctx.font = '10px Inter, sans-serif';
     const step = [0.1, 0.5, 1, 2, 5, 10, 15, 30, 60, 120].find((s) => (s / dur) * width > 60) ?? 300;
     for (let t = 0; t <= dur; t += step) { ctx.fillRect(tx(t), 0, 1, 6); ctx.fillText(formatTime(t), tx(t) + 2, 14); }
@@ -202,10 +204,16 @@ function Waveform({ pcm, pos, sel, markers, pxPerSec, onSeek, onSelect }: { pcm:
   const tAt = (e: React.PointerEvent) => { const r = cv.current!.getBoundingClientRect(); return Math.max(0, Math.min(dur, ((e.clientX - r.left) / width) * dur)); };
   return (
     <div ref={wrap} className="overflow-x-auto rounded border border-line">
-      <canvas ref={cv} style={{ width, height: H, display: 'block', cursor: 'text' }} data-testid="waveform" aria-label="Waveform. Drag to select a range, click to seek."
-        onPointerDown={(e) => { (e.target as Element).setPointerCapture(e.pointerId); drag.current = tAt(e); }}
-        onPointerMove={(e) => { if (drag.current === null || !e.buttons) return; const t = tAt(e); const a = Math.min(drag.current, t), b = Math.max(drag.current, t); if (b - a > 0.02) onSelect({ start: a, end: b }); }}
+      <canvas ref={cv} style={{ width, height: H, display: 'block', cursor: 'text' }} data-testid="waveform" aria-label="Waveform. Drag to select a range, click to seek, drag along the time ruler to scrub."
+        onPointerDown={(e) => {
+          (e.target as Element).setPointerCapture(e.pointerId);
+          const r = cv.current!.getBoundingClientRect();
+          if (e.clientY - r.top < 20) { scrub.current = true; onSeek(tAt(e)); return; }
+          drag.current = tAt(e);
+        }}
+        onPointerMove={(e) => { if (scrub.current && e.buttons) { onSeek(tAt(e)); return; } if (drag.current === null || !e.buttons) return; const t = tAt(e); const a = Math.min(drag.current, t), b = Math.max(drag.current, t); if (b - a > 0.02) onSelect({ start: a, end: b }); }}
         onPointerUp={(e) => {
+          if (scrub.current) { scrub.current = false; return; }
           const t = tAt(e);
           if (drag.current !== null && Math.abs(t - drag.current) <= 0.02 * Math.max(1, dur / 10)) {
             // click: seek; if markers exist, select the region between markers

@@ -34,6 +34,7 @@ States: **Tested** (implemented and covered by automated tests) · **Implemented
 | Rich text (Tiptap) with fonts, colours, spacing, bullets, emoji, overflow shrink | Implemented | |
 | Templates: built-in for all 13 games, save/apply/duplicate/rename/delete/import/export, no template mutation | Tested | `repositories.test.ts`, `exports.spec.ts` |
 | Progressive reveal steps & answer-only layers | Tested | presentation model tests |
+| Per-layer reveal animations (fade, zoom, slide up/left, pop, none) used by the audience slide | Tested | `model.test.ts`, `finish.spec.ts` |
 
 ## Image processing
 | Feature | State | Evidence |
@@ -45,6 +46,8 @@ States: **Tested** (implemented and covered by automated tests) · **Implemented
 | Automatic background removal (local), manual cutout, feather | Tested | `effects.test.ts`, flow 6 |
 | Silhouette colour, smoothing, outline, shadow | Tested | `effects.test.ts`, flow 6 |
 | PNG / JPEG / transparent PNG / 2× export of processed image | Implemented | Image Studio |
+| Question image export: PNG, transparent PNG, JPEG, custom width (64–8192 px), reveal state, answer banner | Tested | `finish.spec.ts`, `exports.spec.ts` |
+| Media library thumbnails (generated 256 px, stored separately; lists never load originals) | Tested | `finish.spec.ts` |
 | Effects in Web Worker | Implemented | `src/workers/imageWorker.ts` |
 | Pixel-level free-transform within the Image Studio | Implemented via effects (crop/rotate/perspective/distort/zoom) and canvas transforms |
 
@@ -68,8 +71,8 @@ States: **Tested** (implemented and covered by automated tests) · **Implemented
 ## Audio
 | Feature | State | Evidence |
 |---|---|---|
-| Decode, waveform, playback, seek, range select, zoom | Tested | flow 10 |
-| Trim, delete, split markers, reverse (per channel, range), gain, fades, speed, loop | Tested | `audio.test.ts`, flow 10 |
+| Decode, waveform, playback, seek, scrub (drag on the time ruler), range select, zoom | Tested | flow 10, `finish.spec.ts` |
+| Trim, delete, split markers, reverse (per channel, range), gain, fades (fixed length or across the selection), speed, loop | Tested | `audio.test.ts`, flow 10 |
 | Non-destructive op list (reorder/disable/remove) | Tested | `audio.test.ts` |
 | WAV encoding/export (sample rate & channels preserved) | Tested | `audio.test.ts`, flow 10 |
 | MP3 export | Blocked — no MP3 encoder bundled by design; WAV only (documented) | |
@@ -95,8 +98,8 @@ States: **Tested** (implemented and covered by automated tests) · **Implemented
 ## AI (optional)
 | Feature | State | Evidence |
 |---|---|---|
-| Provider abstraction (Ollama, Claude via local proxy, OpenAI-compatible) | Implemented | proxy syntax-checked; not exercised against live providers in CI (no credentials) |
-| Review/edit/accept/reject UI; app fully usable with AI disabled | Implemented / Tested (disabled path) | all E2E tests run with AI disabled |
+| Provider abstraction (Ollama, Claude via local proxy, OpenAI-compatible) | Tested (client side) | `finish.spec.ts` with a mocked local endpoint; live providers not exercised (no credentials) |
+| Review/edit/accept/reject UI; saved only when accepted; app fully usable with AI disabled | Tested | `finish.spec.ts` (accept subset, edit, reject; disabled = no AI buttons, no external requests) |
 
 ## Hardening
 | Feature | State | Evidence |

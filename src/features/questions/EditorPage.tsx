@@ -19,8 +19,7 @@ import { AssetsTab, LayersPanel, QuestionNavigator, TemplatesTab } from './panel
 import { ImageStudio } from '@/features/image-editor/ImageStudio';
 import { copySelected, deleteSelected, duplicateSelected, groupSelected, nudge, pasteClipboard, reorder, setAspect, ungroupSelected } from './layerOps';
 import { maxRevealStep, ASPECTS } from '@/engines/scene/factories';
-import { renderSceneToCanvas, canvasToBlob } from '@/engines/rendering/renderScene';
-import { downloadBlob, safeFilename } from './actions';
+import { ExportImageDialog } from '@/features/exports/ExportImageDialog';
 import { cn, formatTime } from '@/utils/misc';
 import type { Question } from '@/types/schema';
 
@@ -145,12 +144,8 @@ function Toolbar({ onSave, onHelp }: { onSave: () => void; onHelp: () => void })
   const canUndo = useEditor((s) => s.past.length > 0);
   const canRedo = useEditor((s) => s.future.length > 0);
   const sel = useEditor((s) => s.selection.length);
-  const exportPng = async (answer: boolean) => {
-    try {
-      const c = await renderSceneToCanvas(draft.scene, { revealStep: Infinity, answerRevealed: answer, answerBanner: answer ? draft.correctAnswer : null });
-      downloadBlob(await canvasToBlob(c), `${safeFilename(questionDisplayTitle(draft))}${answer ? '-answer' : ''}.png`);
-    } catch (e) { toast.error('Export failed', errorMessage(e)); }
-  };
+  const [exportOpen, setExportOpen] = useState(false);
+
   return (
     <div className="flex items-center gap-1 border-b border-line bg-panel px-2 py-1.5" role="toolbar" aria-label="Editor toolbar">
       <GameIcon type={draft.gameType} size={16} />
@@ -168,8 +163,8 @@ function Toolbar({ onSave, onHelp }: { onSave: () => void; onHelp: () => void })
       <Button size="icon-sm" variant="ghost" tooltip="Paste (Ctrl+V)" onClick={pasteClipboard}><ClipboardPaste size={14} /></Button>
       <Button size="sm" variant="ghost" tooltip="Duplicate this question" onClick={async () => { await useEditor.getState(); const q = await questionsRepo.duplicate(draft.id); navigate(`/edit/${q.id}`); toast.success('Question duplicated'); }}><CopyPlus size={14} />Duplicate</Button>
       <div className="ml-auto flex items-center gap-1">
-        <Button size="sm" variant="ghost" onClick={() => exportPng(false)}><Download size={14} />PNG</Button>
-        <Button size="sm" variant="ghost" onClick={() => exportPng(true)}>Answer PNG</Button>
+        <Button size="sm" variant="ghost" onClick={() => setExportOpen(true)} data-testid="export-image"><Download size={14} />Export image</Button>
+        <ExportImageDialog question={draft} open={exportOpen} onOpenChange={setExportOpen} />
         <Button size="sm" variant="primary" onClick={() => { onSave(); window.open(`/present/single?question=${draft.id}`, '_blank'); }} data-testid="present-question"><Presentation size={14} />Present</Button>
         <Button size="icon-sm" variant="ghost" tooltip="Keyboard shortcuts (?)" onClick={onHelp}><Keyboard size={14} /></Button>
       </div>

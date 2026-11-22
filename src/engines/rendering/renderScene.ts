@@ -13,6 +13,8 @@ export type RenderState = {
   ghostHidden?: boolean;
   /** draw an answer banner into the image (exports) */
   answerBanner?: string | null;
+  /** skip the slide background (transparent PNG export) */
+  transparentBackground?: boolean;
   hideLayerIds?: Set<string>;
 };
 
@@ -60,7 +62,7 @@ export function isLayerShown(l: Layer, state: RenderState): 'show' | 'ghost' | '
 
 export function drawScene(ctx: CanvasRenderingContext2D, scene: Scene, res: Resources, state: RenderState) {
   ctx.save();
-  drawBackground(ctx, scene.width, scene.height, scene.background, res.background);
+  if (!state.transparentBackground) drawBackground(ctx, scene.width, scene.height, scene.background, res.background);
   for (const l of scene.layers) {
     const vis = isLayerShown(l, state);
     if (vis === 'hide') continue;

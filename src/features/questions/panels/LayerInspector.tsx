@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AlignLeft, AlignCenter, AlignRight, AlignStartVertical, AlignCenterVertical, AlignEndVertical, ArrowUpToLine, ArrowDownToLine, ChevronUp, ChevronDown, FlipHorizontal, FlipVertical, Wand2, ImagePlus, Trash2, Copy } from 'lucide-react';
 import { useEditor } from '@/stores/editor';
 import type { ImageLayer, Layer, ShapeLayer, TextLayer, EmojiLayer } from '@/types/schema';
+import { ANIMATIONS } from '@/types/schema';
 import { Button, ColorField, Field, Input, Section, Select, SliderField, Toggle } from '@/components/ui/primitives';
 import { RichTextEditor } from '@/components/editors/RichTextEditor';
 import { AssetPickerDialog } from '@/components/common/AssetPicker';
@@ -64,6 +65,11 @@ export function LayerInspector({ onOpenImageStudio }: { onOpenImageStudio: (laye
           <div className="flex items-end pb-1"><Toggle label="Only after answer" checked={l.answerOnly} onChange={(v) => updateLayer(l.id, (x) => { x.answerOnly = v; })} /></div>
         </div>
         <p className="text-[11px] text-muted">Step 0 shows immediately. Higher steps appear one at a time when presenting.</p>
+        <Field label="Reveal animation (presentation)">
+          <Select value={l.animation ?? 'fade'} data-testid="layer-animation" onChange={(e) => updateLayer(l.id, (x) => { x.animation = e.target.value as NonNullable<Layer['animation']>; })}>
+            {ANIMATIONS.map((a) => <option key={a} value={a}>{a === 'none' ? 'None (instant)' : a.replace('-', ' ')}</option>)}
+          </Select>
+        </Field>
         <SliderField label="Shadow blur" value={l.shadow?.blur ?? 0} min={0} max={80} step={1} onChange={(v) => updateLayer(l.id, (x) => { x.shadow = { blur: v, color: x.shadow?.color ?? 'rgba(0,0,0,0.6)', x: x.shadow?.x ?? 0, y: x.shadow?.y ?? 8 }; }, 'shadow')} />
         {l.shadow && l.shadow.blur > 0 && <ColorField label="Shadow colour" value={l.shadow.color} onChange={(v) => updateLayer(l.id, (x) => { if (x.shadow) x.shadow.color = v; }, 'shadowc')} />}
       </Section>

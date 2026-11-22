@@ -158,6 +158,8 @@ const BaseLayer = z.object({
   /** only visible once the answer has been revealed */
   answerOnly: z.boolean(),
   groupId: z.string().optional(),
+  /** entrance animation used when this layer is revealed during a presentation */
+  animation: z.enum(['none', 'fade', 'zoom', 'slide-up', 'slide-left', 'pop']).optional(),
   shadow: z.object({ blur: z.number(), color: z.string(), x: z.number(), y: z.number() }).optional(),
 });
 
@@ -259,6 +261,8 @@ export const LayerSchema = z.discriminatedUnion('kind', [
   CountryLayerSchema, SearchLayerSchema, DialogueLayerSchema,
 ]);
 export type Layer = z.infer<typeof LayerSchema>;
+export const ANIMATIONS = ['none', 'fade', 'zoom', 'slide-up', 'slide-left', 'pop'] as const;
+export type Animation = (typeof ANIMATIONS)[number];
 export type LayerKind = Layer['kind'];
 export type ImageLayer = z.infer<typeof ImageLayerSchema>;
 export type TextLayer = z.infer<typeof TextLayerSchema>;

@@ -8,18 +8,18 @@ npm run e2e         # Playwright against `vite preview` (Chromium)
 ```
 Fixtures for E2E are generated deterministically by `node e2e/fixtures/make-fixtures.mjs` (committed outputs: logo.png, subject.png, prop.png, tone.wav — stereo, 22.05 kHz, left channel fading in and right channel fading out so reversal and channel order are detectable).
 
-## Latest results (2026-11-18)
+## Latest results (2026-11-22)
 
-### Unit & integration — 69 passed (7 files)
+### Unit & integration — 70 passed (7 files)
 - `engines/image/__tests__/effects.test.ts` — geometry (mirror, 180°, 90° rotate with expansion, crop, zoom, homography, perspective), blur/pixelate (variance checks; slider changes output), colour effects, masks (polygon, brush, subtract, invert), selective effects, hide, erase, effect ordering, disabled effects / original untouched, all 25 effect types execute, auto cutout, manual mask subtract, silhouette + outline.
 - `engines/audio/__tests__/audio.test.ts` — per-channel reversal without channel swap, ranged reversal, trim, delete, gain (dB), fades, speed, loop, ordered op pipeline with disabled op, WAV header validity and round trip.
 - `engines/geography/__tests__/geo.test.ts` — dataset coverage/uniqueness, search by name/alias/code, real & symmetric adjacency, no-border countries (incl. corrected Sri Lanka), status classification, metadata↔geometry linkage, multipolygon island filtering (France keeps Corsica, drops overseas parts).
 - `utils/answers.test.ts` — answer normalisation, alternatives, alias dedupe.
 - `db/__tests__/repositories.test.ts` — all 13 game types persist, validation rejects mismatched content, versioning + conflict detection, revisions + restore, duplicate/archive/restore/delete, filtering, asset dedupe + reference protection + shared media kept on delete, built-in templates for all modes, template application without mutation, user templates, audio templates, collections, quiz/round building + moving + duplicating + multi-quiz membership, ZIP round trip into a clean DB, tampered/malformed package rejection.
 - `db/__tests__/performance.test.ts` — 10,000 questions: load summaries ≈ 50 ms, search+filter+sort ≈ 8 ms.
-- `features/presentation/model.test.ts` — slide building, answer/aliases/notes/unrevealed hints absent from public state before reveal, present after, Space action sequence.
+- `features/presentation/model.test.ts` — slide building, answer/aliases/notes/unrevealed hints absent from public state before reveal, present after, reveal-animation selection, Space action sequence.
 
-### End-to-end (Playwright, Chromium) — 16 passed, 1 skipped (manual screenshot helper)
+### End-to-end (Playwright, Chromium) — 21 passed, 1 skipped (manual screenshot helper)
 | Spec | Covers |
 |---|---|
 | smoke | every page loads; all 13 game editors open and save; no page errors |
@@ -37,10 +37,15 @@ Fixtures for E2E are generated deterministically by `node e2e/fixtures/make-fixt
 | templates | save question as template, create from it, appears in "recently used" |
 | canvas | mouse drag moves element, corner handle resizes, autosave persists across reload |
 | a11y | axe-core audit (incl. colour contrast): no serious/critical violations on dashboard, bank, create, media, round builder, templates, import/export, settings, editor |
+| finish: AI | mocked local provider: suggestions reviewed, one edited, one unchecked, reject leaves data unchanged, accept saves only the chosen items |
+| finish: AI disabled | no AI controls rendered and no external network requests |
+| finish: export | JPEG at 800 px and transparent PNG at 1000×563 from the rendered (pixelated) result |
+| finish: animation | per-layer "zoom" animation reaches the audience slide on its reveal step; other steps fade |
+| finish: media | thumbnails generated and stored separately; waveform ruler drag scrubs the playhead without creating a selection |
 | offline | after first load, with network disabled: navigate, create question, load geometry, autosave |
 
 ### Manual checks performed
 - Visual review of dashboard, altered-logo editor (mirror + rotate output), neighbours map (Germany: 9 real neighbours, labelled, hidden target), silhouette (auto cutout), search history card.
 
 ### Not covered by automation
-- Live AI providers (no credentials in CI); long (multi-minute) audio performance; Firefox/Safari runs.
+- Live AI providers (no credentials; the client side is tested against a mocked endpoint); long (multi-minute) audio performance; Firefox/Safari runs.

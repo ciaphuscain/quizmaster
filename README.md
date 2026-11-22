@@ -11,7 +11,8 @@ A local-first, professional authoring studio for quizmasters. Create, edit, orga
 - **Audio Studio**: waveform, ruler, playhead, range selection, trim, delete, split, reverse (whole or selection), fades, gain, speed, loop, preview original vs edited, WAV export. Operations are stored separately; the original file is never modified.
 - **Real geography**: Natural Earth 1:50m geometry, validated land-border adjacency, multiple projections, island handling, offline flags.
 - **Question bank** (virtualised, 10,000+ questions), media library (SHA-256 deduplication, reference tracking), collections, templates (31 built-in + your own), quizzes with rounds (drag and drop).
-- **Live presentation**: host view with private answers/notes/timer/hints and a separate audience window synchronised over `BroadcastChannel`. The audience only ever receives revealed information.
+- **Export images** at any width up to 8192 px as PNG, transparent PNG or JPEG, at any reveal step, with or without the answer.
+- **Live presentation**: host view with private answers/notes/timer/hints, per-layer reveal animations, and a separate audience window synchronised over `BroadcastChannel`. The audience only ever receives revealed information.
 - **Import/export**: portable ZIP packages (validated on import), full backups, JSON, PNG, PDF question sheet and answer key, PowerPoint.
 - **Autosave** with retry and conflict detection, persistent revision history, crash recovery.
 - **Optional AI** (Ollama, Claude via a local proxy, or any OpenAI-compatible local server). Suggestions are always reviewable and never saved unless accepted.

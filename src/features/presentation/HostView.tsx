@@ -117,7 +117,7 @@ export default function HostView() {
       const msg: ChannelMsg = { type: 'state', state: publicState, slide: blob };
       lastPublic.current = msg;
       channel.current?.postMessage(msg);
-      setSlideUrl((old) => { if (old) URL.revokeObjectURL(old); return blob ? URL.createObjectURL(blob) : null; });
+      setSlideUrl((old) => { if (old) setTimeout(() => URL.revokeObjectURL(old), 2000); return blob ? URL.createObjectURL(blob) : null; });
     })();
     return () => { alive = false; };
     // re-render image only when the visual state changes; timer/audio changes are sent below

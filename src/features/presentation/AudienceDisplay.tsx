@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Volume2 } from 'lucide-react';
 import { remainingSeconds, type PublicState } from './model';
 
@@ -36,7 +36,7 @@ export function AudienceDisplay({ state, slideUrl, connected = true, compact }: 
         )}
       </div>
       <div className="relative min-h-0 flex-1">
-        {slideUrl ? <img src={slideUrl} alt={state.prompt} className="absolute inset-0 h-full w-full object-contain" data-testid="audience-slide" key={state.slideKey} /> : null}
+        <SlideWithTransition url={slideUrl} alt={state.prompt} slideKey={state.slideKey} transition={state.transition} />
       </div>
       {(state.hints.length > 0 || state.answer) && (
         <div className={`flex flex-col items-center gap-2 px-6 ${compact ? 'py-1' : 'py-4'}`}>
@@ -51,5 +51,24 @@ export function AudienceDisplay({ state, slideUrl, connected = true, compact }: 
         </div>
       )}
     </div>
+  );
+}
+
+/** Keeps the previous slide underneath while the new one animates in, so reveals look like the new layer entering. */
+function SlideWithTransition({ url, alt, slideKey, transition }: { url: string | null; alt: string; slideKey: string; transition: PublicState['transition'] }) {
+  const [prev, setPrev] = useState<string | null>(null);
+  const last = useRef<string | null>(null);
+  useEffect(() => {
+    if (last.current && last.current !== url) setPrev(last.current);
+    last.current = url;
+    const t = setTimeout(() => setPrev(null), 700);
+    return () => clearTimeout(t);
+  }, [url]);
+  if (!url) return null;
+  return (
+    <>
+      {prev && <img src={prev} alt="" aria-hidden className="absolute inset-0 h-full w-full object-contain" />}
+      <img src={url} alt={alt} key={slideKey} className={`absolute inset-0 h-full w-full object-contain qm-anim-${transition}`} data-testid="audience-slide" data-transition={transition} />
+    </>
   );
 }

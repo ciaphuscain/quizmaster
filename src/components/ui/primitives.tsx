@@ -137,8 +137,8 @@ export function Toggle({ label, checked, onChange, disabled }: { label: string; 
       <span>{label}</span>
       <span className="relative inline-flex">
         <input type="checkbox" role="switch" className="peer sr-only" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
-        <span className="h-4 w-7 rounded-full bg-panel-3 peer-checked:bg-accent transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-accent" />
-        <span className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-white transition-transform peer-checked:translate-x-3" />
+        <span aria-hidden className="pointer-events-none h-4 w-7 rounded-full bg-panel-3 peer-checked:bg-accent transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-accent" />
+        <span aria-hidden className="pointer-events-none absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-white transition-transform peer-checked:translate-x-3" />
       </span>
     </label>
   );

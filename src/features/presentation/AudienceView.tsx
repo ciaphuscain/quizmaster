@@ -18,7 +18,7 @@ export default function AudienceView() {
       last.current = Date.now(); setConnected(true);
       if (m.type === 'state') {
         setState(m.state);
-        setUrl((old) => { if (old) URL.revokeObjectURL(old); return m.slide ? URL.createObjectURL(m.slide) : null; });
+        setUrl((old) => { if (old) setTimeout(() => URL.revokeObjectURL(old), 2000); return m.slide ? URL.createObjectURL(m.slide) : null; });
       } else if (m.type === 'ping') ch.postMessage({ type: 'pong', id } satisfies ChannelMsg);
       else if (m.type === 'bye') { setConnected(false); setState(null); }
     };

@@ -9,8 +9,9 @@ test('PDF question sheet, answer key, PPTX and PNG exports produce valid files',
   await upload(page, () => page.getByTestId('upload-logo').click(), 'logo.png');
   await page.getByTestId('brand-answer').fill('Circle Co');
   await waitSaved(page);
+  await page.getByTestId('export-image').click();
   const png = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'PNG', exact: true }).click();
+  await page.getByTestId('export-image-go').click();
   const pngBuf = fs.readFileSync(await (await png).path());
   expect(pngBuf.subarray(1, 4).toString()).toBe('PNG');
   expect(pngBuf.readUInt32BE(16)).toBe(1920);

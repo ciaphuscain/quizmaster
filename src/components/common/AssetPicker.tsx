@@ -5,15 +5,15 @@ import { db } from '@/db/database';
 import type { Asset } from '@/types/schema';
 import { Button, Input } from '@/components/ui/primitives';
 import { Dialog } from '@/components/ui/overlays';
-import { useAssetUrl } from '@/hooks/useAssetUrl';
+import { useAssetThumbUrl } from '@/hooks/useAssetUrl';
 import { importFiles, pickFiles } from '@/features/questions/actions';
 import { formatBytes } from '@/utils/misc';
 
 export function AssetThumb({ asset, size = 96 }: { asset: Asset; size?: number }) {
-  const url = useAssetUrl(asset.type === 'image' ? asset.id : null);
+  const url = useAssetThumbUrl(asset.type === 'image' ? asset.id : null);
   return (
     <div className="checkerboard flex items-center justify-center overflow-hidden rounded" style={{ width: size, height: size }}>
-      {asset.type === 'image' ? (url ? <img src={url} alt={asset.name} className="max-h-full max-w-full object-contain" draggable={false} /> : null) : <Music size={size / 3} className="text-zinc-500" />}
+      {asset.type === 'image' ? (url ? <img src={url} alt={asset.name} className="max-h-full max-w-full object-contain" draggable={false} loading="lazy" data-testid="asset-thumb" /> : null) : <Music size={size / 3} className="text-zinc-500" />}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import type { Question, Quiz, Round } from '@/types/schema';
+import type { Animation, Question, Quiz, Round } from '@/types/schema';
 import { maxRevealStep } from '@/engines/scene/factories';
 
 export type Slide =
@@ -35,6 +35,8 @@ export type PublicState = {
   timer: { duration: number; remaining: number; endsAt: number | null };
   audioPlaying: boolean;
   showNumbers: boolean;
+  /** how the new slide image enters (from the animation of the layers just revealed) */
+  transition: Animation;
 };
 
 export function buildSlides(rounds: (Round & { refs: { questionId: string }[] })[], showTransitions: boolean): Slide[] {
@@ -63,7 +65,7 @@ export function buildPublicState(quiz: Pick<Quiz, 'title' | 'theme' | 'settings'
   const base: PublicState = {
     kind: 'waiting', quizTitle: quiz?.title ?? '', accent: quiz?.theme.accent ?? '#f59e0b', background: quiz?.theme.background ?? '#0f172a',
     roundTitle: '', roundSubtitle: '', questionNumber: null, questionTotal: null, prompt: '', slideKey: '', hints: [], answer: null, acceptedAnswers: [],
-    timer: s.timer, audioPlaying: s.audioPlaying, showNumbers: quiz?.settings.showQuestionNumbers ?? true,
+    timer: s.timer, audioPlaying: s.audioPlaying, showNumbers: quiz?.settings.showQuestionNumbers ?? true, transition: 'fade',
   };
   if (s.ended) return { ...base, kind: 'end' };
   if (!slide) return base;
@@ -80,6 +82,7 @@ export function buildPublicState(quiz: Pick<Quiz, 'title' | 'theme' | 'settings'
     hints: q.hints.slice(0, s.hintsRevealed).map((h) => h.text),
     answer: s.answerRevealed ? q.correctAnswer : null,
     acceptedAnswers: s.answerRevealed ? q.acceptedAnswers : [],
+    transition: revealTransition(q, s),
   };
 }
 
@@ -108,3 +111,9 @@ export type ChannelMsg =
   | { type: 'ping' }
   | { type: 'pong'; id: string }
   | { type: 'bye' };
+
+/** Animation of the layers revealed by the current step (or answer reveal); defaults to fade. */
+export function revealTransition(q: Question, s: HostState): Animation {
+  const layers = q.scene.layers.filter((l) => l.visible && (s.answerRevealed ? l.answerOnly : !l.answerOnly && s.step > 0 && l.revealStep === s.step));
+  return layers.find((l) => l.animation)?.animation ?? 'fade';
+}
