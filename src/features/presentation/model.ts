@@ -1,9 +1,13 @@
-import type { Animation, Question, Quiz, Round } from '@/types/schema';
+import type { Animation, AnswerReveal, Question, Quiz, Round } from '@/types/schema';
 import { maxRevealStep } from '@/engines/scene/factories';
 
+/**
+ * phase 'ask'    — the question is asked; its answer may only be revealed if `answerable` (reveal mode "each").
+ * phase 'review' — the answer run-through after a round or the whole quiz: full question shown, answer revealable.
+ */
 export type Slide =
-  | { kind: 'transition'; round: Round; roundIndex: number }
-  | { kind: 'question'; questionId: string; round: Round | null; roundIndex: number; number: number; numberInRound: number; totalInRound: number };
+  | { kind: 'transition'; round: Round; roundIndex: number; review?: boolean }
+  | { kind: 'question'; questionId: string; round: Round | null; roundIndex: number; number: number; numberInRound: number; totalInRound: number; phase: 'ask' | 'review'; answerable: boolean };
 
 export type HostState = {
   slideIndex: number;
@@ -21,6 +25,8 @@ export const initialHostState = (): HostState => ({ slideIndex: 0, step: 0, answ
 /** What the audience is allowed to know. Built only from revealed information. */
 export type PublicState = {
   kind: 'question' | 'transition' | 'end' | 'waiting' | 'leaderboard';
+  /** 'review' while running through answers at the end of a round / the quiz */
+  phase: 'ask' | 'review';
   quizTitle: string;
   accent: string;
   background: string;
@@ -43,15 +49,34 @@ export type PublicState = {
   final: boolean;
 };
 
-export function buildSlides(rounds: (Round & { refs: { questionId: string }[] })[], showTransitions: boolean): Slide[] {
+export function buildSlides(rounds: (Round & { refs: { questionId: string }[] })[], showTransitions: boolean, reveal: AnswerReveal = 'each'): Slide[] {
   const slides: Slide[] = [];
+  const asked: { r: Round; ri: number; refs: { questionId: string; number: number }[] }[] = [];
   let n = 0;
+  const answers = (r: Round, ri: number, refs: { questionId: string; number: number }[]) => {
+    slides.push({ kind: 'transition', round: r, roundIndex: ri, review: true });
+    refs.forEach((ref, i) => slides.push({ kind: 'question', questionId: ref.questionId, round: r, roundIndex: ri, number: ref.number, numberInRound: i + 1, totalInRound: refs.length, phase: 'review', answerable: true }));
+  };
   rounds.forEach((r, ri) => {
     if (!r.refs.length) return;
     if (showTransitions && r.transition.show) slides.push({ kind: 'transition', round: r, roundIndex: ri });
-    r.refs.forEach((ref, i) => slides.push({ kind: 'question', questionId: ref.questionId, round: r, roundIndex: ri, number: ++n, numberInRound: i + 1, totalInRound: r.refs.length }));
+    const refs = r.refs.map((ref) => ({ questionId: ref.questionId, number: ++n }));
+    refs.forEach((ref, i) => slides.push({ kind: 'question', questionId: ref.questionId, round: r, roundIndex: ri, number: ref.number, numberInRound: i + 1, totalInRound: refs.length, phase: 'ask', answerable: reveal === 'each' }));
+    if (reveal === 'round') answers(r, ri, refs);
+    else asked.push({ r, ri, refs });
   });
+  if (reveal === 'quiz') for (const a of asked) answers(a.r, a.ri, a.refs);
   return slides;
+}
+
+/** Review slides show every reveal step at once (the question was already asked). */
+export function effectiveStep(slide: Slide | undefined, s: HostState): number {
+  return slide?.kind === 'question' && slide.phase === 'review' ? Infinity : s.step;
+}
+
+/** Whether the answer for the current slide may be revealed now. */
+export function canRevealAnswer(slide: Slide | undefined): boolean {
+  return slide?.kind === 'question' && slide.answerable;
 }
 
 export function effectiveTimeLimit(q: Question | undefined, round: Round | null): number {
@@ -69,34 +94,41 @@ export function buildPublicState(quiz: Pick<Quiz, 'title' | 'theme' | 'settings'
   const base: PublicState = {
     kind: 'waiting', quizTitle: quiz?.title ?? '', accent: quiz?.theme.accent ?? '#f59e0b', background: quiz?.theme.background ?? '#0f172a',
     roundTitle: '', roundSubtitle: '', questionNumber: null, questionTotal: null, prompt: '', slideKey: '', hints: [], answer: null, acceptedAnswers: [],
-    timer: s.timer, audioPlaying: s.audioPlaying, showNumbers: quiz?.settings.showQuestionNumbers ?? true, transition: 'fade', leaderboard: null, final: false,
+    timer: s.timer, audioPlaying: s.audioPlaying, showNumbers: quiz?.settings.showQuestionNumbers ?? true, transition: 'fade', leaderboard: null, final: false, phase: 'ask',
   };
   const lb = board.map(({ name, color, score, rank }) => ({ name, color, score, rank }));
   if (s.ended) return lb.length ? { ...base, kind: 'leaderboard', leaderboard: lb, final: true, slideKey: 'final' } : { ...base, kind: 'end' };
   if (s.showLeaderboard && lb.length) return { ...base, kind: 'leaderboard', leaderboard: lb, slideKey: `lb-${lb.map((x) => x.score).join(',')}` };
   if (!slide) return base;
-  if (slide.kind === 'transition') return { ...base, kind: 'transition', roundTitle: slide.round.title, roundSubtitle: slide.round.transition.subtitle || slide.round.description, slideKey: `t-${slide.round.id}` };
+  if (slide.kind === 'transition') {
+    if (slide.review) return { ...base, kind: 'transition', phase: 'review', roundTitle: `${slide.round.title} — Answers`, roundSubtitle: 'Swap papers and get ready to mark!', slideKey: `ta-${slide.round.id}` };
+    return { ...base, kind: 'transition', roundTitle: slide.round.title, roundSubtitle: slide.round.transition.subtitle || slide.round.description, slideKey: `t-${slide.round.id}` };
+  }
   if (!q) return base;
+  // Answers are withheld on "ask" slides when the quiz reveals answers later — even if the host state says otherwise.
+  const revealed = s.answerRevealed && slide.answerable;
+  const step = effectiveStep(slide, s);
   return {
     ...base,
     kind: 'question',
+    phase: slide.phase,
     roundTitle: slide.round?.title ?? '',
     questionNumber: slide.numberInRound,
     questionTotal: slide.totalInRound,
     prompt: q.prompt,
-    slideKey: `${q.id}:${q.version}:${s.step}:${s.answerRevealed}`,
+    slideKey: `${slide.phase}:${q.id}:${q.version}:${step}:${revealed}`,
     hints: q.hints.slice(0, s.hintsRevealed).map((h) => h.text),
-    answer: s.answerRevealed ? q.correctAnswer : null,
-    acceptedAnswers: s.answerRevealed ? q.acceptedAnswers : [],
-    transition: revealTransition(q, s),
+    answer: revealed ? q.correctAnswer : null,
+    acceptedAnswers: revealed ? q.acceptedAnswers : [],
+    transition: slide.phase === 'review' && !revealed ? 'fade' : revealTransition(q, { ...s, answerRevealed: revealed }),
   };
 }
 
 /** "Space" behaviour: next reveal step → reveal answer → next slide. */
 export function nextAction(s: HostState, slide: Slide | undefined, q: Question | undefined, slideCount: number): HostState {
   if (slide?.kind === 'question' && q) {
-    if (s.step < stepsFor(q)) return { ...s, step: s.step + 1 };
-    if (!s.answerRevealed) return { ...s, answerRevealed: true, timer: { ...s.timer, endsAt: null } };
+    if (slide.phase === 'ask' && s.step < stepsFor(q)) return { ...s, step: s.step + 1 };
+    if (slide.answerable && !s.answerRevealed) return { ...s, answerRevealed: true, timer: { ...s.timer, endsAt: null } };
   }
   return gotoSlide(s, s.slideIndex + 1, slideCount);
 }

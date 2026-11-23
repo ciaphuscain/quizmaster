@@ -8,6 +8,7 @@ A local-first, professional authoring studio for quizmasters. Create, edit, orga
 - **One-click demo quiz**: 7 ready-to-present rounds across 7 game modes (real flags, outlines and neighbour maps, emoji cinema, terrible plot summaries, search history, another perspective).
 - **Round generator**: build a flag / outline / neighbour / mixed round for any region and difficulty from validated country data — answers, alternative spellings and factual hints included. Seeded, so the same settings reproduce the same round.
 - **Live scoring**: teams, ✓/✗ marking with round multipliers, negative marking and first-correct bonus, a fuzzy **answer checker** that tells exact matches from near-miss spellings, an animated **leaderboard** on the audience screen (`L`), and a **final podium with confetti**, tie-aware. Scores persist if the host tab reloads.
+- **Answer reveal timing** (per quiz, in Round Builder → Quiz settings): reveal answers after each question, at the end of each round, or only after all questions. In the deferred modes the answer is locked during the asking pass (even the `A` shortcut), then an answer run-through replays every question and reveals each answer on `Space`. PowerPoint export follows the same order.
 - **Countdown ring** on the audience screen that turns amber, then red and pulsing for the last 5 seconds.
 - **Quiz health check**: before you present, every problem (missing answer, missing media, empty clues, answers given away in clue text, unreversed songs, duplicate answers) is listed with a one-click jump to fix it.
 - **Command palette** (`Ctrl K`): jump to any page, quiz or question, or create any of the 13 game types from the keyboard.
@@ -59,7 +60,8 @@ Everything is stored in your browser's IndexedDB for this site/origin. Use **Imp
 2. Use the **game tab** (right panel) for the mode's specialised tools, the **Question** tab for answer, alternatives, hints, difficulty, points, time limit, tags, collections and notes, and the **Element** tab for the selected layer.
 3. Changes autosave (status in the toolbar). `Ctrl+S` saves immediately and records a revision you can restore later.
 4. **Round Builder** → create a quiz, add rounds, drag questions in, set scoring and time limits, then **Start presentation**.
-5. In the host view click **Open audience window**, move it to the projector and press `F`. Default keys: `Space` next action, `→`/`←` next/previous, `A` answer, `H` hint, `T` timer, `P` audio, `F` fullscreen, `Esc` exit fullscreen (configurable in Settings).
+5. To keep answers secret until the end, open **Quiz settings & theme** in the Round Builder and set **Reveal answers** to *At the end of each round* or *At the end of the quiz*.
+6. In the host view click **Open audience window**, move it to the projector and press `F`. Default keys: `Space` next action, `→`/`←` next/previous, `A` answer, `H` hint, `T` timer, `P` audio, `F` fullscreen, `Esc` exit fullscreen (configurable in Settings).
 
 ### Optional AI assistant
 

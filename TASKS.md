@@ -98,6 +98,7 @@ States: **Tested** (implemented and covered by automated tests) · **Implemented
 | One-click demo quiz (7 rounds, 7 modes, passes the health check) | Tested | `demo.test.ts`, `showtime.spec.ts` |
 | Quiz health check with jump-to-fix | Tested | `health.test.ts`, `showtime.spec.ts` |
 | Command palette (Ctrl K) | Tested | `showtime.spec.ts` |
+| Answer reveal timing: after each question / end of each round / end of quiz, answer locked while asking, answer run-through, PPTX order | Tested | `reveal.test.ts`, `reveal-at-end.spec.ts` |
 
 ## Import / export
 | Feature | State | Evidence |

@@ -11,16 +11,16 @@ import { downloadBlob, pickFiles, safeFilename } from '@/features/questions/acti
 import { quizzesRepo } from '@/db/repositories/other';
 import { useSettings } from '@/stores/settings';
 import { formatBytes } from '@/utils/misc';
-import type { Question } from '@/types/schema';
+import type { AnswerReveal, Question } from '@/types/schema';
 
-async function itemsForScope(scope: string): Promise<{ title: string; items: ExportItem[] }> {
+async function itemsForScope(scope: string): Promise<{ title: string; items: ExportItem[]; answerReveal?: AnswerReveal }> {
   if (scope.startsWith('quiz:')) {
     const t = await quizzesRepo.tree(scope.slice(5));
     if (!t) throw new Error('Quiz not found');
     const qs = new Map((await db.questions.bulkGet(t.rounds.flatMap((r) => r.refs.map((x) => x.questionId)))).filter((q): q is Question => !!q).map((q) => [q.id, q]));
     let n = 0;
     const items = t.rounds.flatMap((r) => r.refs.map((ref) => qs.get(ref.questionId)).filter((q): q is Question => !!q).map((q) => ({ question: q, number: ++n, roundTitle: r.title })));
-    return { title: t.quiz.title, items };
+    return { title: t.quiz.title, items, answerReveal: t.quiz.settings.answerReveal ?? 'each' };
   }
   const qs = await db.questions.where('status').notEqual('archived').toArray();
   return { title: 'Question bank', items: qs.map((q, i) => ({ question: q, number: i + 1 })) };
@@ -62,9 +62,9 @@ export default function ImportExport() {
     downloadBlob(key ? await exportAnswerKeyPdf(title, items) : await exportQuestionSheetPdf(title, items, setBusy), `${fileBase}-${key ? 'answer-key' : 'questions'}.pdf`);
   });
   const doPptx = () => run('PowerPoint export', async () => {
-    const { title, items } = await itemsForScope(scope);
+    const { title, items, answerReveal } = await itemsForScope(scope);
     if (!items.length) throw new Error('No questions in scope');
-    downloadBlob(await exportPptx(title, items, setBusy), `${fileBase}.pptx`);
+    downloadBlob(await exportPptx(title, items, setBusy, answerReveal), `${fileBase}.pptx`);
   });
   const doImport = async () => {
     const [f] = await pickFiles('.zip,.json,application/zip,application/json');
@@ -120,7 +120,7 @@ export default function ImportExport() {
               <Button disabled={!!busy} onClick={() => doPdf(false)}><Download size={14} />Question sheet</Button>
               <Button disabled={!!busy} onClick={() => doPdf(true)} data-testid="export-answer-key"><Download size={14} />Answer key</Button>
             </Card>
-            <Card icon={<Presentation size={16} />} title="PowerPoint (.pptx)" desc="Question + answer slide per question, rendered at full resolution; audio clues embedded as WAV; answers in speaker notes. Progressive reveals and timers are not interactive in PowerPoint.">
+            <Card icon={<Presentation size={16} />} title="PowerPoint (.pptx)" desc="Question and answer slides rendered at full resolution, ordered by the quiz's answer-reveal setting; audio clues embedded as WAV; answers in speaker notes. Progressive reveals and timers are not interactive in PowerPoint.">
               <Button disabled={!!busy} onClick={doPptx}><Download size={14} />Export PPTX</Button>
             </Card>
             <Card icon={<HardDrive size={16} />} title="Full backup" desc="Everything in this browser: all questions, media, quizzes, collections and templates. Recommended weekly — browser storage can be cleared.">

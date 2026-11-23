@@ -457,11 +457,18 @@ export const QuizSchema = z.object({
   title: z.string(),
   description: z.string(),
   theme: z.object({ accent: z.string(), background: z.string(), font: z.string() }),
-  settings: z.object({ showQuestionNumbers: z.boolean(), autoStartTimer: z.boolean(), showRoundTransitions: z.boolean() }),
+  settings: z.object({
+    showQuestionNumbers: z.boolean(),
+    autoStartTimer: z.boolean(),
+    showRoundTransitions: z.boolean(),
+    /** when answers are revealed: after each question (default), after each round, or after the whole quiz */
+    answerReveal: z.enum(['each', 'round', 'quiz']).optional(),
+  }),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
 export type Quiz = z.infer<typeof QuizSchema>;
+export type AnswerReveal = NonNullable<Quiz['settings']['answerReveal']>;
 
 export const RoundSchema = z.object({
   id: z.string(),

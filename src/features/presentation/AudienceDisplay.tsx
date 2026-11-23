@@ -19,7 +19,7 @@ export function AudienceDisplay({ state, slideUrl, connected = true, compact }: 
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4 reveal-in" style={{ background: state.background }} data-testid="audience-transition">
         <div className="text-xl uppercase tracking-[0.3em] text-white/60">{state.quizTitle}</div>
-        <div className={`${compact ? 'text-3xl' : 'text-7xl'} font-bold`} style={{ color: state.accent }}>{state.roundTitle}</div>
+        <div className={`${compact ? 'text-3xl' : 'text-7xl'} font-bold`} style={{ color: state.phase === 'review' ? '#34d399' : state.accent }}>{state.roundTitle}</div>
         {state.roundSubtitle && <div className="max-w-3xl text-center text-2xl text-white/80">{state.roundSubtitle}</div>}
       </div>
     );
@@ -30,7 +30,8 @@ export function AudienceDisplay({ state, slideUrl, connected = true, compact }: 
     <div className="relative flex h-full w-full flex-col bg-black text-white" data-testid="audience-question">
       <div className={`flex items-center gap-4 px-6 ${compact ? 'py-1 text-xs' : 'py-3 text-xl'}`}>
         <span className="font-semibold" style={{ color: state.accent }}>{state.roundTitle}</span>
-        {state.showNumbers && state.questionNumber && <span className="text-white/70">Question {state.questionNumber}{state.questionTotal ? ` / ${state.questionTotal}` : ''}</span>}
+        {state.showNumbers && state.questionNumber && <span className="text-white/70">{state.phase === 'review' ? 'Answer' : 'Question'} {state.questionNumber}{state.questionTotal ? ` / ${state.questionTotal}` : ''}</span>}
+        {state.phase === 'review' && <span className="rounded bg-emerald-600/80 px-2 text-white" data-testid="audience-review-badge">Answers</span>}
         {state.audioPlaying && <span className="flex items-center gap-1 text-white/80"><Volume2 size={compact ? 12 : 22} />Playing</span>}
         {showTimer && <CountdownRing remaining={rem} duration={state.timer.duration} running={!!state.timer.endsAt} accent={state.accent} size={compact ? 28 : 64} />}
       </div>

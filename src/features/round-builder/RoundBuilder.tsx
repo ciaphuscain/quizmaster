@@ -8,14 +8,14 @@ import { db } from '@/db/database';
 import { quizzesRepo } from '@/db/repositories/other';
 import { filterSummaries } from '@/db/repositories/questions';
 import { PageHeader } from '@/app/AppLayout';
-import { Button, Field, Input, Textarea, Toggle, Section, ColorField } from '@/components/ui/primitives';
+import { Button, Field, Input, Textarea, Toggle, Section, ColorField, Select } from '@/components/ui/primitives';
 import { GameIcon } from '@/components/common/GameIcon';
 import { Dialog, confirmDialog, toast, errorMessage } from '@/components/ui/overlays';
 import { ScenePreview } from '@/features/templates/TemplatePreview';
 import { GAMES } from '@/games/registry';
 import { buildPackage } from '@/engines/export/package';
 import { downloadBlob, safeFilename } from '@/features/questions/actions';
-import type { Round } from '@/types/schema';
+import type { AnswerReveal, Round } from '@/types/schema';
 import { cn } from '@/utils/misc';
 
 type DragData = { kind: 'ref'; refId: string } | { kind: 'question'; questionId: string };
@@ -53,7 +53,7 @@ export default function RoundBuilder() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title={quiz.title} subtitle={`${rounds.length} rounds · ${total} questions`}
+      <PageHeader title={quiz.title} subtitle={`${rounds.length} rounds · ${total} questions · answers ${({ each: 'after each question', round: 'at the end of each round', quiz: 'at the end of the quiz' } as const)[quiz.settings.answerReveal ?? 'each']}`}
         actions={<>
           <Button variant="outline" onClick={() => setGenOpen(true)} data-testid="generate-round"><Wand2 size={14} />Generate round</Button>
           <Button variant="outline" onClick={exportZip} data-testid="export-quiz-zip"><Download size={14} />Export ZIP</Button>
@@ -157,6 +157,13 @@ function QuizSettings({ quiz }: { quiz: NonNullable<Awaited<ReturnType<typeof qu
       <Field label="Description"><Textarea rows={2} defaultValue={quiz.description} onBlur={(e) => quizzesRepo.update(quiz.id, { description: e.target.value })} /></Field>
       <ColorField label="Accent colour" value={quiz.theme.accent} onChange={(v) => quizzesRepo.update(quiz.id, { theme: { ...quiz.theme, accent: v } })} />
       <ColorField label="Transition background" value={quiz.theme.background} onChange={(v) => quizzesRepo.update(quiz.id, { theme: { ...quiz.theme, background: v } })} />
+      <Field label="Reveal answers">
+        <Select value={quiz.settings.answerReveal ?? 'each'} data-testid="answer-reveal" onChange={(e) => quizzesRepo.update(quiz.id, { settings: { ...quiz.settings, answerReveal: e.target.value as AnswerReveal } })}>
+          <option value="each">After each question</option>
+          <option value="round">At the end of each round (answer run-through per round)</option>
+          <option value="quiz">At the end of the quiz (all answers after all questions)</option>
+        </Select>
+      </Field>
       <Toggle label="Show question numbers" checked={quiz.settings.showQuestionNumbers} onChange={(v) => quizzesRepo.update(quiz.id, { settings: { ...quiz.settings, showQuestionNumbers: v } })} />
       <Toggle label="Auto-start timer on each question" checked={quiz.settings.autoStartTimer} onChange={(v) => quizzesRepo.update(quiz.id, { settings: { ...quiz.settings, autoStartTimer: v } })} />
       <Toggle label="Round transition slides" checked={quiz.settings.showRoundTransitions} onChange={(v) => quizzesRepo.update(quiz.id, { settings: { ...quiz.settings, showRoundTransitions: v } })} />

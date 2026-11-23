@@ -15,7 +15,7 @@ import { AudienceDisplay } from './AudienceDisplay';
 import { ScoringPanel } from './ScoringPanel';
 import { emptyScoreboard, standings, type Scoreboard } from './scoring';
 import { settingsRepo } from '@/db/repositories/other';
-import { buildPublicState, buildSlides, CHANNEL, effectiveTimeLimit, gotoSlide, initialHostState, nextAction, remainingSeconds, stepsFor, type ChannelMsg, type HostState, type Slide } from './model';
+import { buildPublicState, buildSlides, canRevealAnswer, effectiveStep, CHANNEL, effectiveTimeLimit, gotoSlide, initialHostState, nextAction, remainingSeconds, stepsFor, type ChannelMsg, type HostState, type Slide } from './model';
 
 function beep() {
   try {
@@ -64,7 +64,7 @@ export default function HostView() {
     })();
   }, [quizId, single]);
 
-  const slides: Slide[] = useMemo(() => (tree ? buildSlides(tree.rounds, tree.quiz.settings.showRoundTransitions) : []), [tree]);
+  const slides: Slide[] = useMemo(() => (tree ? buildSlides(tree.rounds, tree.quiz.settings.showRoundTransitions, tree.quiz.settings.answerReveal ?? 'each') : []), [tree]);
   const slide = slides[s.slideIndex];
   const q = slide?.kind === 'question' ? questions.get(slide.questionId) : undefined;
   const [board, setBoardState] = useState<Scoreboard>(emptyScoreboard);
@@ -77,7 +77,7 @@ export default function HostView() {
   // timer setup when slide changes
   useEffect(() => {
     if (slide?.kind !== 'question') return;
-    const d = effectiveTimeLimit(q, slide.round);
+    const d = slide.phase === 'review' ? 0 : effectiveTimeLimit(q, slide.round); // no timer while running through answers
     setS((p) => ({ ...p, timer: { duration: d, remaining: d, endsAt: tree?.quiz.settings.autoStartTimer && d ? Date.now() + d * 1000 : null } }));
     stopAudio();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,7 +118,7 @@ export default function HostView() {
     (async () => {
       let blob: Blob | null = null;
       if (publicState.kind === 'question' && q) {
-        const c = await renderSceneToCanvas(q.scene, { revealStep: s.step, answerRevealed: s.answerRevealed }, 1920);
+        const c = await renderSceneToCanvas(q.scene, { revealStep: effectiveStep(slide, s), answerRevealed: s.answerRevealed && canRevealAnswer(slide) }, 1920);
         blob = await canvasToBlob(c);
       }
       if (!alive) return;
@@ -160,7 +160,7 @@ export default function HostView() {
     nextAction: () => setS((p) => nextAction(p, slide, q, slides.length)),
     nextQuestion: () => setS((p) => gotoSlide(p, p.slideIndex + 1, slides.length)),
     prevQuestion: () => setS((p) => gotoSlide(p, p.slideIndex - 1, slides.length)),
-    revealAnswer: () => setS((p) => ({ ...p, answerRevealed: true, timer: { ...p.timer, remaining: remainingSeconds(p.timer), endsAt: null } })),
+    revealAnswer: () => canRevealAnswer(slide) && setS((p) => ({ ...p, answerRevealed: true, timer: { ...p.timer, remaining: remainingSeconds(p.timer), endsAt: null } })),
     revealHint: () => setS((p) => ({ ...p, hintsRevealed: Math.min(q?.hints.length ?? 0, p.hintsRevealed + 1) })),
     toggleTimer,
     fullscreen: () => { setAudienceMode(true); void stageRef.current?.requestFullscreen?.(); },
@@ -183,7 +183,10 @@ export default function HostView() {
   if (tree === undefined) return <div className="flex h-full items-center justify-center text-muted">Loading presentation…</div>;
   if (tree === null || !slides.length) return <div className="flex h-full flex-col items-center justify-center gap-3 text-muted">This quiz has no questions to present.<Button onClick={() => navigate('/quizzes')}>Back</Button></div>;
 
-  const steps = stepsFor(q);
+  const steps = slide?.kind === 'question' && slide.phase === 'review' ? 0 : stepsFor(q);
+  const answerable = canRevealAnswer(slide);
+  const reveal = tree.quiz.settings.answerReveal ?? 'each';
+  const lockedReason = reveal === 'round' ? 'Answers are revealed at the end of this round' : 'Answers are revealed at the end of the quiz';
   const rem = remainingSeconds(s.timer, now);
   const nextSlide = slides[s.slideIndex + 1];
   const nextQ = nextSlide?.kind === 'question' ? questions.get(nextSlide.questionId) : undefined;
@@ -212,9 +215,9 @@ export default function HostView() {
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <Button variant="outline" onClick={actions.prevQuestion} disabled={s.slideIndex === 0}><ChevronLeft size={14} />Previous</Button>
-            <Button variant="primary" onClick={actions.nextAction} data-testid="next-action"><ChevronRight size={14} />{slide?.kind === 'question' && s.step < steps ? `Reveal step ${s.step + 1}/${steps}` : slide?.kind === 'question' && !s.answerRevealed ? 'Reveal answer' : 'Next'} <Kbd>Space</Kbd></Button>
+            <Button variant="primary" onClick={actions.nextAction} data-testid="next-action"><ChevronRight size={14} />{slide?.kind === 'question' && s.step < steps ? `Reveal step ${s.step + 1}/${steps}` : slide?.kind === 'question' && answerable && !s.answerRevealed ? 'Reveal answer' : 'Next'} <Kbd>Space</Kbd></Button>
             <Button variant="outline" onClick={actions.revealHint} disabled={!q || s.hintsRevealed >= (q?.hints.length ?? 0)} data-testid="reveal-hint"><Lightbulb size={14} />Hint ({s.hintsRevealed}/{q?.hints.length ?? 0})</Button>
-            <Button variant="outline" onClick={actions.revealAnswer} disabled={!q || s.answerRevealed} data-testid="reveal-answer"><CheckCircle2 size={14} />Reveal answer</Button>
+            <Button variant="outline" onClick={actions.revealAnswer} disabled={!q || s.answerRevealed || !answerable} tooltip={q && !answerable ? lockedReason : undefined} data-testid="reveal-answer"><CheckCircle2 size={14} />Reveal answer</Button>
             <Button variant="outline" onClick={actions.nextQuestion}><SkipForward size={14} />Skip</Button>
             {q?.audio && <Button variant="outline" onClick={actions.playAudio} data-testid="play-audio">{s.audioPlaying ? <VolumeX size={14} /> : <Volume2 size={14} />}{s.audioPlaying ? 'Stop audio' : 'Play audio'}</Button>}
             {s.timer.duration > 0 && <>
@@ -240,6 +243,9 @@ export default function HostView() {
               {q.hints.length > 0 && <div><div className="mb-1 font-semibold text-muted">Hints</div><ol className="list-decimal pl-4">{q.hints.map((h, i) => <li key={h.id} className={i < s.hintsRevealed ? 'text-muted line-through' : ''}>{h.text}</li>)}</ol></div>}
               {q.notes && <div><div className="mb-1 font-semibold text-muted">Notes</div><p className="whitespace-pre-wrap">{q.notes}</p></div>}
               {steps > 0 && <div className="text-muted">Reveal step {s.step} of {steps}</div>}
+              {slide?.kind === 'question' && (slide.phase === 'review'
+                ? <div className="rounded bg-accent/15 px-2 py-1 text-accent" data-testid="phase-badge">Answer run-through — press Space to reveal</div>
+                : !answerable && <div className="rounded bg-panel-2 px-2 py-1 text-muted" data-testid="phase-badge">🔒 {lockedReason}. Only you can see it now.</div>)}
             </>
           ) : slide?.kind === 'transition' ? <div className="text-muted">Round transition: <b className="text-fg">{slide.round.title}</b></div> : <div className="text-muted">Presentation ended.</div>}
           <div>
@@ -253,7 +259,7 @@ export default function HostView() {
                 const sq = sl.kind === 'question' ? questions.get(sl.questionId) : undefined;
                 return (
                   <li key={i}><button onClick={() => setS((p) => gotoSlide(p, i, slides.length))} className={cn('flex w-full items-center gap-1.5 rounded px-2 py-1 text-left hover:bg-panel-2', i === s.slideIndex && 'bg-accent/15')}>
-                    {sl.kind === 'transition' ? <span className="font-semibold">▸ {sl.round.title}</span> : <>{sq && <GameIcon type={sq.gameType} size={11} />}<span className="w-6 text-muted">{sl.number}.</span><span className="truncate">{sq?.title || sq?.correctAnswer || 'Missing question'}</span></>}
+                    {sl.kind === 'transition' ? <span className="font-semibold">▸ {sl.round.title}{sl.review ? ' — Answers' : ''}</span> : sl.phase === 'review' ? <><span className="w-6 text-success">✓{sl.number}</span><span className="truncate text-muted">Answer: {sq?.correctAnswer || '—'}</span></> : <>{sq && <GameIcon type={sq.gameType} size={11} />}<span className="w-6 text-muted">{sl.number}.</span><span className="truncate">{sq?.title || sq?.correctAnswer || 'Missing question'}</span></>}
                   </button></li>
                 );
               })}

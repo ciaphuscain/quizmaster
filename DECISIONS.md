@@ -45,3 +45,6 @@ The round generator and demo quiz only use validated country data (names, offici
 
 ## D14 — Answer checking
 `matchAnswer` normalises case, accents, punctuation and leading articles, accepts listed alternatives exactly, and reports small typos as "close" (≤1 edit for 4–7 characters, ≤2 for 8+, ≤3 for 16+; short answers must match exactly). The host makes the final call — the app never auto-awards points.
+
+## D15 — Deferred answer reveal
+The quiz setting `answerReveal` (`each` | `round` | `quiz`, optional for backward compatibility; default `each`) changes only how slides are sequenced: question slides carry a phase (`ask` / `review`) and an `answerable` flag. In deferred modes the ask slides are never answerable, and `buildPublicState` checks this itself, so a stray host state (shortcut, jump, reload) still cannot send the answer to the audience. Review slides show the whole question (all reveal steps, no timer) and reveal the answer on Space. Scoring is keyed by question id, so teams can be marked during the run-through.

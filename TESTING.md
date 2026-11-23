@@ -10,7 +10,7 @@ Fixtures for E2E are generated deterministically by `node e2e/fixtures/make-fixt
 
 ## Latest results (2026-11-23)
 
-### Unit & integration — 86 passed (11 files)
+### Unit & integration — 90 passed (12 files)
 - `engines/image/__tests__/effects.test.ts` — geometry (mirror, 180°, 90° rotate with expansion, crop, zoom, homography, perspective), blur/pixelate (variance checks; slider changes output), colour effects, masks (polygon, brush, subtract, invert), selective effects, hide, erase, effect ordering, disabled effects / original untouched, all 25 effect types execute, auto cutout, manual mask subtract, silhouette + outline.
 - `engines/audio/__tests__/audio.test.ts` — per-channel reversal without channel swap, ranged reversal, trim, delete, gain (dB), fades, speed, loop, ordered op pipeline with disabled op, WAV header validity and round trip.
 - `engines/geography/__tests__/geo.test.ts` — dataset coverage/uniqueness, search by name/alias/code, real & symmetric adjacency, no-border countries (incl. corrected Sri Lanka), status classification, metadata↔geometry linkage, multipolygon island filtering (France keeps Corsica, drops overseas parts).
@@ -20,10 +20,11 @@ Fixtures for E2E are generated deterministically by `node e2e/fixtures/make-fixt
 - `engines/geography/__tests__/generator.test.ts` — seeded determinism, no repeats, region and UN-member filters, difficulty ordering by area, neighbour rounds only with real neighbours, mixed-mode cycling, generated questions validate and hints never contain the answer.
 - `games/health.test.ts` — unfinished questions, missing media, answer giveaways, unreversed songs, duplicate answers, clean country question.
 - `features/round-builder/demo.test.ts` — demo quiz: 7 non-empty rounds, 7 game modes, zero health-check errors.
+- `features/presentation/reveal.test.ts` — slide order for all three reveal modes, numbering kept in the run-through, answer withheld on ask slides even with a forced host state, Space skips the reveal while asking and reveals during the run-through.
 - `db/__tests__/performance.test.ts` — 10,000 questions: load summaries ≈ 50 ms, search+filter+sort ≈ 8 ms.
 - `features/presentation/model.test.ts` — slide building, answer/aliases/notes/unrevealed hints absent from public state before reveal, present after, reveal-animation selection, Space action sequence.
 
-### End-to-end (Playwright, Chromium) — 23 passed, 2 skipped (manual screenshot helpers)
+### End-to-end (Playwright, Chromium) — 24 passed, 2 skipped (manual screenshot helpers)
 | Spec | Covers |
 |---|---|
 | smoke | every page loads; all 13 game editors open and save; no page errors |
@@ -48,6 +49,7 @@ Fixtures for E2E are generated deterministically by `node e2e/fixtures/make-fixt
 | finish: media | thumbnails generated and stored separately; waveform ruler drag scrubs the playhead without creating a selection |
 | showtime: live show | demo quiz → health check “Ready to present” → host + audience → 3 teams → answer checker exact/typo → marking → leaderboard (no answer leak) → countdown ring → podium with tie headline → scores survive host reload |
 | showtime: palette & generator | Ctrl K creates a neighbours question; palette opens the generator; mixed European round of 6 reuses the empty default round and passes the health check; palette search opens a question |
+| reveal at end | “end of the quiz” mode: reveal button disabled and `A` ignored while asking, no answer in any audience message, answers transition, each answer revealed with Space in the run-through, PPTX = questions first then an answers section |
 | offline | after first load, with network disabled: navigate, create question, load geometry, autosave |
 
 ### Manual checks performed
