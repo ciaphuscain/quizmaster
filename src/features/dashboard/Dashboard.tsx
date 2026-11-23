@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Search, Plus, FileText, CheckCircle2, ListOrdered, Images, Library } from 'lucide-react';
+import { Search, Plus, FileText, CheckCircle2, ListOrdered, Images, Library, Sparkles, Wand2 } from 'lucide-react';
+import { buildDemoQuiz } from '@/features/round-builder/demo';
+import { renderThumbnails } from '@/features/questions/actions';
 import { db } from '@/db/database';
 import { PageHeader } from '@/app/AppLayout';
 import { Button, Input } from '@/components/ui/primitives';
@@ -40,18 +42,38 @@ export default function Dashboard() {
   const results = useMemo(() => (search ? filterSummaries(summaries ?? [], { search, includeArchived: true }).slice(0, 8) : []), [summaries, search]);
   const max = Math.max(1, ...Object.values(stats.byGame));
 
+  const [building, setBuilding] = useState(false);
+  const demo = async () => {
+    setBuilding(true);
+    try { const { quizId, questions } = await buildDemoQuiz(); toast.success('Demo quiz ready', `${questions.length} questions in 7 rounds — press Start presentation to try it.`); navigate(`/quizzes/${quizId}`); void renderThumbnails(questions); }
+    catch (e) { toast.error('Could not build demo', errorMessage(e)); } finally { setBuilding(false); }
+  };
   const quick = async (g: typeof GAME_LIST[number]['type'], templateId?: string) => {
     try { const q = await createAndSave(g, templateId); navigate(`/edit/${q.id}`); } catch (e) { toast.error('Could not create question', errorMessage(e)); }
   };
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title="Dashboard" subtitle="Your quiz authoring overview" actions={<Button variant="primary" onClick={() => navigate('/create')}><Plus size={14} />New question</Button>} />
+      <PageHeader title="Dashboard" subtitle="Your quiz authoring overview" actions={<>
+        <Button variant="outline" onClick={demo} disabled={building} data-testid="build-demo"><Sparkles size={14} />{building ? 'Building…' : 'Demo quiz'}</Button>
+        <Button variant="outline" onClick={() => navigate('/quizzes?generate=1')}><Wand2 size={14} />Generate round</Button>
+        <Button variant="primary" onClick={() => navigate('/create')}><Plus size={14} />New question</Button>
+      </>} />
       <div className="flex-1 overflow-auto p-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-5">
           {stats.total > 50 && (!lastBackup || Date.now() - lastBackup > 7 * 86400000) && (
             <div className="rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-xs">
               Your work is stored only in this browser. <Link to="/import-export" className="font-semibold text-accent underline">Create a backup</Link> regularly ({lastBackup ? `last ${new Date(lastBackup).toLocaleDateString()}` : 'never backed up'}).
+            </div>
+          )}
+          {summaries && summaries.length === 0 && (
+            <div className="flex items-center gap-4 rounded-xl border border-accent/40 bg-gradient-to-r from-accent/15 to-transparent p-5">
+              <Sparkles size={28} className="shrink-0 text-accent" />
+              <div className="flex-1">
+                <div className="text-base font-semibold">Welcome to Quizmaster Studio</div>
+                <div className="text-xs text-muted">Build a ready-to-present demo quiz in one click — flags, real map outlines, neighbour maps, emoji movies, bad plots, search history and more — then press <b>Ctrl K</b> to jump anywhere.</div>
+              </div>
+              <Button variant="primary" size="lg" onClick={demo} disabled={building} data-testid="build-demo-hero"><Sparkles size={15} />{building ? 'Building…' : 'Build a demo quiz'}</Button>
             </div>
           )}
           <div className="relative">

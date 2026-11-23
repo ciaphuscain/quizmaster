@@ -4,6 +4,14 @@ A local-first, professional authoring studio for quizmasters. Create, edit, orga
 
 ## Features at a glance
 
+**New in this release — showtime features**
+- **One-click demo quiz**: 7 ready-to-present rounds across 7 game modes (real flags, outlines and neighbour maps, emoji cinema, terrible plot summaries, search history, another perspective).
+- **Round generator**: build a flag / outline / neighbour / mixed round for any region and difficulty from validated country data — answers, alternative spellings and factual hints included. Seeded, so the same settings reproduce the same round.
+- **Live scoring**: teams, ✓/✗ marking with round multipliers, negative marking and first-correct bonus, a fuzzy **answer checker** that tells exact matches from near-miss spellings, an animated **leaderboard** on the audience screen (`L`), and a **final podium with confetti**, tie-aware. Scores persist if the host tab reloads.
+- **Countdown ring** on the audience screen that turns amber, then red and pulsing for the last 5 seconds.
+- **Quiz health check**: before you present, every problem (missing answer, missing media, empty clues, answers given away in clue text, unreversed songs, duplicate answers) is listed with a one-click jump to fix it.
+- **Command palette** (`Ctrl K`): jump to any page, quiz or question, or create any of the 13 game types from the keyboard.
+
 - **13 game modes**, each with a dedicated authoring panel:
   Logo (normal), Logo (altered, 25-effect pipeline), Country flag, Country border, Country neighbours, Silhouette (thing/person), Movie emojis, Movie bad plot, Movie famous dialogue, Movie props, Movie search history, Movie another perspective, Song backwards.
 - **Editor**: three-panel workspace, canvas with drag/resize/rotate, snapping + alignment guides, grid, safe-area guides, zoom/pan, 16:9 / 4:3 / square / custom canvases, layers (rename, reorder, lock, hide, group, duplicate), undo/redo, copy/paste, rich text (Tiptap), keyboard shortcuts (`?` in the editor).

@@ -31,3 +31,38 @@ export function dedupeAliases(correct: string, aliases: string[]): string[] {
   }
   return out;
 }
+
+/** Levenshtein edit distance (iterative, O(n·m) time, O(m) memory). */
+export function editDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+export type AnswerMatch = { verdict: 'exact' | 'close' | 'wrong'; matched: string | null; distance: number };
+
+/**
+ * Grades a guess against the correct answer and alternatives.
+ * exact = equal after normalisation; close = small typo (≤1 edit for short answers, ≤2 for 8+ chars, ≤3 for 16+).
+ */
+export function matchAnswer(guess: string, correct: string, accepted: string[] = []): AnswerMatch {
+  const g = normalizeAnswer(guess);
+  if (!g) return { verdict: 'wrong', matched: null, distance: Infinity };
+  let best: AnswerMatch = { verdict: 'wrong', matched: null, distance: Infinity };
+  for (const cand of [correct, ...accepted]) {
+    const c = normalizeAnswer(cand);
+    if (!c) continue;
+    if (c === g) return { verdict: 'exact', matched: cand, distance: 0 };
+    const d = editDistance(g, c);
+    const allowed = c.length >= 16 ? 3 : c.length >= 8 ? 2 : c.length >= 4 ? 1 : 0;
+    if (d <= allowed && d < best.distance) best = { verdict: 'close', matched: cand, distance: d };
+  }
+  return best;
+}

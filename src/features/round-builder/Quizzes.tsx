@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Trash2, Presentation, ListOrdered } from 'lucide-react';
 import { db } from '@/db/database';
 import { PageHeader } from '@/app/AppLayout';
@@ -12,6 +13,15 @@ export default function Quizzes() {
   const quizzes = useLiveQuery(() => db.quizzes.orderBy('updatedAt').reverse().toArray(), []) ?? [];
   const rounds = useLiveQuery(() => db.rounds.toArray(), []) ?? [];
   const refs = useLiveQuery(() => db.quizQuestionRefs.toArray(), []) ?? [];
+  const [params] = useSearchParams();
+  const once = useRef(false);
+  useEffect(() => {
+    if (once.current) return;
+    once.current = true;
+    if (params.get('generate') === '1') void quizzesRepo.create('Geography quiz').then((q) => navigate(`/quizzes/${q.id}?generate=1`, { replace: true }));
+    else if (params.get('new') === '1') void create();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const create = async () => {
     const t = await promptDialog({ title: 'New quiz', defaultValue: 'Friday Pub Quiz' });
     if (t) { const q = await quizzesRepo.create(t); navigate(`/quizzes/${q.id}`); }

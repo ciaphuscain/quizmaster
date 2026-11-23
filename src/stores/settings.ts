@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { settingsRepo } from '@/db/repositories/other';
 
-export type ShortcutAction = 'nextAction' | 'nextQuestion' | 'prevQuestion' | 'revealAnswer' | 'revealHint' | 'toggleTimer' | 'fullscreen' | 'playAudio';
+export type ShortcutAction = 'nextAction' | 'nextQuestion' | 'prevQuestion' | 'revealAnswer' | 'revealHint' | 'toggleTimer' | 'fullscreen' | 'playAudio' | 'leaderboard';
 export const DEFAULT_SHORTCUTS: Record<ShortcutAction, string> = {
   nextAction: ' ',
   nextQuestion: 'ArrowRight',
@@ -11,6 +11,7 @@ export const DEFAULT_SHORTCUTS: Record<ShortcutAction, string> = {
   toggleTimer: 't',
   fullscreen: 'f',
   playAudio: 'p',
+  leaderboard: 'l',
 };
 
 export type AiProvider = 'none' | 'ollama' | 'claude-proxy' | 'openai-compatible';

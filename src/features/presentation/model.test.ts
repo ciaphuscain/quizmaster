@@ -35,6 +35,14 @@ describe('presentation model', () => {
     expect(buildPublicState(null, slides[1], q3, { ...initialHostState(), slideIndex: 1, step: 0 }).transition).toBe('fade');
     expect(buildPublicState(null, slides[1], q3, { ...initialHostState(), slideIndex: 1, step: 1 }).transition).toBe('zoom');
   });
+  it('leaderboard shows only names, colours and scores; final podium at end', () => {
+    const board = [{ id: 't', name: 'Owls', color: '#fff', score: 12, rank: 1, correct: 1 }];
+    const pub = buildPublicState(null, slides[1], q, { ...initialHostState(), slideIndex: 1, showLeaderboard: true }, board);
+    expect(pub.kind).toBe('leaderboard');
+    expect(pub.leaderboard).toEqual([{ name: 'Owls', color: '#fff', score: 12, rank: 1 }]);
+    expect(JSON.stringify(pub)).not.toContain('Lion King');
+    expect(buildPublicState(null, slides[1], q, { ...initialHostState(), ended: true }, board)).toMatchObject({ kind: 'leaderboard', final: true });
+  });
   it('space advances reveal steps, then answer, then slide', () => {
     const q2 = createQuestion('movie-emojis');
     q2.scene.layers.push({ ...q2.scene.layers[0], id: 'x', revealStep: 1 });

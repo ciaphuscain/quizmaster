@@ -36,3 +36,12 @@ Provider abstraction (`src/features/ai-assistant/ai.ts`) with Ollama, an OpenAI-
 
 ## D11 — Exports
 PDF via pdf-lib (rendered slides + text; standard fonts cannot encode emoji, which are replaced with `?` in PDF *text* only — rendered slide images keep them). PPTX via PptxGenJS using full-resolution rendered slides for layout fidelity, answer slides, speaker-note answers and embedded WAV audio. Progressive reveals, timers and live effects are not interactive in PowerPoint.
+
+## D12 — Scoring and leaderboard
+Scores are an append-only list of awards (`correct`, `wrong`, `bonus`, `adjust`) per team and question (`src/features/presentation/scoring.ts`), so marking is idempotent and undoable and totals are always derivable. They are stored per quiz in the settings table, so a host reload keeps the scores. The audience receives only names, colours, scores and ranks; ties use competition ranking (1, 1, 3) and the podium announces shared first place rather than picking a winner alphabetically.
+
+## D13 — Generated content
+The round generator and demo quiz only use validated country data (names, official names, alternative spellings, regions, capitals, land neighbours) and original text written for this app; no third-party media is bundled. Difficulty is a documented heuristic (land area, plus neighbour count for neighbour maps), not a measured statistic. A seeded PRNG makes rounds reproducible.
+
+## D14 — Answer checking
+`matchAnswer` normalises case, accents, punctuation and leading articles, accepts listed alternatives exactly, and reports small typos as "close" (≤1 edit for 4–7 characters, ≤2 for 8+, ≤3 for 16+; short answers must match exactly). The host makes the final call — the app never auto-awards points.

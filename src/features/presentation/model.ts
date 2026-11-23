@@ -13,13 +13,14 @@ export type HostState = {
   timer: { duration: number; remaining: number; endsAt: number | null };
   audioPlaying: boolean;
   ended: boolean;
+  showLeaderboard: boolean;
 };
 
-export const initialHostState = (): HostState => ({ slideIndex: 0, step: 0, answerRevealed: false, hintsRevealed: 0, timer: { duration: 0, remaining: 0, endsAt: null }, audioPlaying: false, ended: false });
+export const initialHostState = (): HostState => ({ slideIndex: 0, step: 0, answerRevealed: false, hintsRevealed: 0, timer: { duration: 0, remaining: 0, endsAt: null }, audioPlaying: false, ended: false, showLeaderboard: false });
 
 /** What the audience is allowed to know. Built only from revealed information. */
 export type PublicState = {
-  kind: 'question' | 'transition' | 'end' | 'waiting';
+  kind: 'question' | 'transition' | 'end' | 'waiting' | 'leaderboard';
   quizTitle: string;
   accent: string;
   background: string;
@@ -37,6 +38,9 @@ export type PublicState = {
   showNumbers: boolean;
   /** how the new slide image enters (from the animation of the layers just revealed) */
   transition: Animation;
+  /** team standings — only names, colours and scores */
+  leaderboard: { name: string; color: string; score: number; rank: number }[] | null;
+  final: boolean;
 };
 
 export function buildSlides(rounds: (Round & { refs: { questionId: string }[] })[], showTransitions: boolean): Slide[] {
@@ -61,13 +65,15 @@ export function stepsFor(q: Question | undefined): number { return q ? maxReveal
  * Builds the audience-facing state. The correct answer, accepted answers, notes and unrevealed hints are
  * never included unless revealed — this object is the only thing sent to the audience window.
  */
-export function buildPublicState(quiz: Pick<Quiz, 'title' | 'theme' | 'settings'> | null, slide: Slide | undefined, q: Question | undefined, s: HostState): PublicState {
+export function buildPublicState(quiz: Pick<Quiz, 'title' | 'theme' | 'settings'> | null, slide: Slide | undefined, q: Question | undefined, s: HostState, board: { name: string; color: string; score: number; rank: number }[] = []): PublicState {
   const base: PublicState = {
     kind: 'waiting', quizTitle: quiz?.title ?? '', accent: quiz?.theme.accent ?? '#f59e0b', background: quiz?.theme.background ?? '#0f172a',
     roundTitle: '', roundSubtitle: '', questionNumber: null, questionTotal: null, prompt: '', slideKey: '', hints: [], answer: null, acceptedAnswers: [],
-    timer: s.timer, audioPlaying: s.audioPlaying, showNumbers: quiz?.settings.showQuestionNumbers ?? true, transition: 'fade',
+    timer: s.timer, audioPlaying: s.audioPlaying, showNumbers: quiz?.settings.showQuestionNumbers ?? true, transition: 'fade', leaderboard: null, final: false,
   };
-  if (s.ended) return { ...base, kind: 'end' };
+  const lb = board.map(({ name, color, score, rank }) => ({ name, color, score, rank }));
+  if (s.ended) return lb.length ? { ...base, kind: 'leaderboard', leaderboard: lb, final: true, slideKey: 'final' } : { ...base, kind: 'end' };
+  if (s.showLeaderboard && lb.length) return { ...base, kind: 'leaderboard', leaderboard: lb, slideKey: `lb-${lb.map((x) => x.score).join(',')}` };
   if (!slide) return base;
   if (slide.kind === 'transition') return { ...base, kind: 'transition', roundTitle: slide.round.title, roundSubtitle: slide.round.transition.subtitle || slide.round.description, slideKey: `t-${slide.round.id}` };
   if (!q) return base;

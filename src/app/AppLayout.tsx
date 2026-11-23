@@ -1,12 +1,13 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { LayoutDashboard, Library, PlusCircle, Images, FolderKanban, ListOrdered, LayoutTemplate, Presentation, ArrowLeftRight, Settings, History, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Library, PlusCircle, Images, FolderKanban, ListOrdered, LayoutTemplate, Presentation, ArrowLeftRight, Settings, History, Sun, Moon, Search } from 'lucide-react';
 import * as Dropdown from '@radix-ui/react-dropdown-menu';
 import { db } from '@/db/database';
 import { Button } from '@/components/ui/primitives';
 import { useSettings } from '@/stores/settings';
 import { GAMES } from '@/games/registry';
 import { cn } from '@/utils/misc';
+import { CommandPalette } from '@/components/common/CommandPalette';
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -33,6 +34,9 @@ export function AppLayout() {
           <img src="/icon.svg" alt="" className="h-6 w-6" />
           <div className="text-[13px] font-semibold tracking-tight">Quizmaster Studio</div>
         </div>
+        <button onClick={() => window.dispatchEvent(new Event('qm-command-palette'))} className="mx-2 mb-2 flex items-center gap-2 rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-left text-[12px] text-muted hover:text-fg" data-testid="open-palette">
+          <Search size={13} /><span className="flex-1 truncate">Search…</span><kbd className="rounded border border-line px-1 text-[10px]">Ctrl K</kbd>
+        </button>
         <div className="flex flex-1 flex-col gap-0.5 px-2">
           {NAV.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end}
@@ -71,6 +75,7 @@ export function AppLayout() {
         </div>
       </nav>
       <main className="min-w-0 flex-1 overflow-hidden"><Outlet /></main>
+      <CommandPalette />
     </div>
   );
 }

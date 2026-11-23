@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { GenerateRoundDialog } from './GenerateRoundDialog';
+import { QuizHealth } from './QuizHealth';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Plus, Trash2, Copy, Presentation, GripVertical, ArrowUp, ArrowDown, Download, Eye, Search, X } from 'lucide-react';
+import { Plus, Trash2, Copy, Presentation, GripVertical, ArrowUp, ArrowDown, Download, Eye, Search, X, Wand2 } from 'lucide-react';
 import { db } from '@/db/database';
 import { quizzesRepo } from '@/db/repositories/other';
 import { filterSummaries } from '@/db/repositories/questions';
@@ -27,6 +29,8 @@ export default function RoundBuilder() {
   const [search, setSearch] = useState('');
   const [drag, setDrag] = useState<DragData | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
+  const [genOpen, setGenOpen] = useState(params.get('generate') === '1');
   const results = useMemo(() => filterSummaries(summaries, { search, sort: 'updated' }).slice(0, 100), [summaries, search]);
   if (tree === undefined) return <div className="p-8 text-muted">Loading…</div>;
   if (!tree) return <div className="p-8 text-muted">Quiz not found.</div>;
@@ -51,6 +55,7 @@ export default function RoundBuilder() {
     <div className="flex h-full flex-col">
       <PageHeader title={quiz.title} subtitle={`${rounds.length} rounds · ${total} questions`}
         actions={<>
+          <Button variant="outline" onClick={() => setGenOpen(true)} data-testid="generate-round"><Wand2 size={14} />Generate round</Button>
           <Button variant="outline" onClick={exportZip} data-testid="export-quiz-zip"><Download size={14} />Export ZIP</Button>
           <Button variant="primary" disabled={!total} onClick={() => window.open(`/present/${quiz.id}`, '_blank')} data-testid="start-presentation"><Presentation size={14} />Start presentation</Button>
         </>} />
@@ -99,6 +104,7 @@ export default function RoundBuilder() {
               </section>
             ))}
             <Button variant="outline" onClick={() => quizzesRepo.addRound(quiz.id, `Round ${rounds.length + 1}`)} data-testid="add-round"><Plus size={14} />Add round</Button>
+            <QuizHealth refs={rounds.flatMap((r) => r.refs.map((x) => ({ ...x, roundTitle: r.title })))} />
             <QuizSettings quiz={quiz} />
           </div>
         </div>
@@ -117,6 +123,7 @@ export default function RoundBuilder() {
           </ul>
         </aside>
       </div>
+      <GenerateRoundDialog quizId={quiz.id} open={genOpen} onOpenChange={(o) => { setGenOpen(o); if (!o && params.get('generate')) setParams({}, { replace: true }); }} />
       <Dialog open={!!previewRound} onOpenChange={(o) => !o && setPreview(null)} title={`Preview — ${previewRound?.title ?? ''}`} wide="xl">
         <RoundPreview refs={previewRound?.refs.map((r) => r.questionId) ?? []} />
       </Dialog>

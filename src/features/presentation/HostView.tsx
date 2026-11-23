@@ -12,6 +12,9 @@ import { isTypingTarget, cn } from '@/utils/misc';
 import { GameIcon } from '@/components/common/GameIcon';
 import { ScenePreview } from '@/features/templates/TemplatePreview';
 import { AudienceDisplay } from './AudienceDisplay';
+import { ScoringPanel } from './ScoringPanel';
+import { emptyScoreboard, standings, type Scoreboard } from './scoring';
+import { settingsRepo } from '@/db/repositories/other';
 import { buildPublicState, buildSlides, CHANNEL, effectiveTimeLimit, gotoSlide, initialHostState, nextAction, remainingSeconds, stepsFor, type ChannelMsg, type HostState, type Slide } from './model';
 
 function beep() {
@@ -64,7 +67,12 @@ export default function HostView() {
   const slides: Slide[] = useMemo(() => (tree ? buildSlides(tree.rounds, tree.quiz.settings.showRoundTransitions) : []), [tree]);
   const slide = slides[s.slideIndex];
   const q = slide?.kind === 'question' ? questions.get(slide.questionId) : undefined;
-  const publicState = useMemo(() => buildPublicState(tree?.quiz ?? null, slide, q, s), [tree, slide, q, s]);
+  const [board, setBoardState] = useState<Scoreboard>(emptyScoreboard);
+  const boardKey = `scoreboard:${quizId === 'single' ? `single:${single}` : quizId}`;
+  useEffect(() => { void settingsRepo.get<Scoreboard>(boardKey, emptyScoreboard()).then(setBoardState); }, [boardKey]);
+  const setBoard = useCallback((b: Scoreboard) => { setBoardState(b); void settingsRepo.set(boardKey, b); }, [boardKey]);
+  const ranking = useMemo(() => standings(board), [board]);
+  const publicState = useMemo(() => buildPublicState(tree?.quiz ?? null, slide, q, s, ranking), [tree, slide, q, s, ranking]);
 
   // timer setup when slide changes
   useEffect(() => {
@@ -157,6 +165,7 @@ export default function HostView() {
     toggleTimer,
     fullscreen: () => { setAudienceMode(true); void stageRef.current?.requestFullscreen?.(); },
     playAudio: () => void toggleAudio(),
+    leaderboard: () => setS((p) => ({ ...p, showLeaderboard: !p.showLeaderboard })),
   };
   const actionsRef = useRef(actions); actionsRef.current = actions;
   useEffect(() => {
@@ -219,6 +228,7 @@ export default function HostView() {
           </div>
         </div>
         <aside className="flex w-96 shrink-0 flex-col gap-3 overflow-auto border-l border-line bg-panel p-4 text-xs">
+          <ScoringPanel board={board} setBoard={setBoard} q={q} round={slide?.kind === 'question' ? slide.round : null} showingLeaderboard={s.showLeaderboard} onToggleLeaderboard={actions.leaderboard} />
           {q ? (
             <>
               <div className="rounded-md border border-success/40 bg-success/10 p-3">

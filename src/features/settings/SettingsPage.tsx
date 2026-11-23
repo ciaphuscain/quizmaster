@@ -5,7 +5,7 @@ import { DEFAULT_SHORTCUTS, useSettings, type AiProvider, type ShortcutAction } 
 import { getProvider } from '@/features/ai-assistant/ai';
 import { toast, errorMessage } from '@/components/ui/overlays';
 
-const ACTION_LABEL: Record<ShortcutAction, string> = { nextAction: 'Next presentation action', nextQuestion: 'Next question', prevQuestion: 'Previous question', revealAnswer: 'Reveal answer', revealHint: 'Reveal hint', toggleTimer: 'Start / pause timer', fullscreen: 'Fullscreen', playAudio: 'Play / stop audio' };
+const ACTION_LABEL: Record<ShortcutAction, string> = { nextAction: 'Next presentation action', nextQuestion: 'Next question', prevQuestion: 'Previous question', revealAnswer: 'Reveal answer', revealHint: 'Reveal hint', toggleTimer: 'Start / pause timer', fullscreen: 'Fullscreen', playAudio: 'Play / stop audio', leaderboard: 'Show / hide leaderboard' };
 
 export default function SettingsPage() {
   const { settings: s, update } = useSettings();

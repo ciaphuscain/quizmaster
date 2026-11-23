@@ -67,3 +67,14 @@ export function downloadBlob(blob: Blob, filename: string) {
 export function safeFilename(s: string) { return (s || 'untitled').replace(/[^a-z0-9-_ ]/gi, '').trim().replace(/\s+/g, '-').slice(0, 60) || 'untitled'; }
 
 export function editorUpdate(fn: (q: Question) => void, coalesce?: string) { useEditor.getState().update(fn, { coalesce }); }
+
+/** Renders and stores list thumbnails for questions created programmatically (best effort, sequential). */
+export async function renderThumbnails(questions: Question[]) {
+  const { renderSceneToCanvas, canvasToBlob } = await import('@/engines/rendering/renderScene');
+  for (const q of questions) {
+    try {
+      const c = await renderSceneToCanvas(q.scene, { revealStep: Infinity, answerRevealed: false }, 384);
+      await questionsRepo.setThumbnail(q.id, await canvasToBlob(c, 'image/jpeg', 0.8));
+    } catch { /* thumbnails are optional */ }
+  }
+}

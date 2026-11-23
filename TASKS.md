@@ -87,6 +87,18 @@ States: **Tested** (implemented and covered by automated tests) · **Implemented
 | Answers never transmitted before reveal | Tested | `model.test.ts`, flow 11–15 (channel interception) |
 | Configurable shortcuts | Implemented | Settings |
 
+## Showtime features
+| Feature | State | Evidence |
+|---|---|---|
+| Teams, ✓/✗ marking, multipliers, negative marking, first-correct bonus, ±1 adjust, undo, persistence | Tested | `scoring.test.ts`, `showtime.spec.ts` |
+| Fuzzy answer checker (exact / close / wrong, with accepted alternatives) | Tested | `answers.test.ts`, `showtime.spec.ts` |
+| Audience leaderboard (names, colours, scores only) and tie-aware final podium with confetti | Tested | `model.test.ts`, `showtime.spec.ts` |
+| Countdown ring timer | Tested | `showtime.spec.ts` |
+| Geography round generator (seeded, region/difficulty/mode, factual hints) | Tested | `generator.test.ts`, `showtime.spec.ts` |
+| One-click demo quiz (7 rounds, 7 modes, passes the health check) | Tested | `demo.test.ts`, `showtime.spec.ts` |
+| Quiz health check with jump-to-fix | Tested | `health.test.ts`, `showtime.spec.ts` |
+| Command palette (Ctrl K) | Tested | `showtime.spec.ts` |
+
 ## Import / export
 | Feature | State | Evidence |
 |---|---|---|
